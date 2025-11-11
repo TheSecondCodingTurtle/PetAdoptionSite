@@ -10,6 +10,35 @@ def displayMainMenu():
     print("4. Staff Menu")
     print("5. Quit")
 
+    options = 5
+    user_choice = askOption(options)
+    if 1 <= user_choice <= options:
+        pass
+    else:
+        print("Invalid option, reloading page...")
+        sleep(1.5)
+
+        displayMainMenu()
+
+def viewAvailablePets():
+    pass
+
+
+def register():
+    print("Register Page:")
+    print("Fill out the following to register: \n")
+
+    name = input("Full name (must be at least 2 words): ")
+    home_type = input("Home type (Flat, House, or Farm only): ")
+    experience = input("Experience level (None, Some, or Expert): ")
+    pet_size = input("Preferred pet size (Small, Medium, Large, or Any): ")
+    energy_level = input("Preferred energy level (Low, Medium, High, or Any): ")
+
+
+def login():
+    pass
+
+
 def displayStaffMenu():
     system("clear")
 
@@ -25,14 +54,6 @@ def displayStaffMenu():
         print("5. Remove a pet")
         print("6. Logout")
 
-def displayAdopterMenu():
-    system("clear")
-    print("Adopter Menu:")
-    print("1. View Available Pets")
-    print("2. Apply to Adopt a Pet")
-    print("3. View My Applications")
-    print("4. Update My Information")
-    print("5. Logout")
 
 def check_staff_password():
     password = "admin123"
@@ -46,5 +67,27 @@ def check_staff_password():
     sleep(2)
     return False
 
-def main():
+
+def quit():
     pass
+
+
+def displayAdopterMenu():
+    system("clear")
+    print("Adopter Menu:")
+    print("1. View Available Pets")
+    print("2. Apply to Adopt a Pet")
+    print("3. View My Applications")
+    print("4. Update My Information")
+    print("5. Logout")
+
+
+def askOption(n):
+    user_option = int(input(f"\nChoose from options 1-{n}: "))
+    return user_option
+    
+
+def main():
+    displayMainMenu()
+
+main()
