@@ -1,3 +1,9 @@
+from os import system
+from time import sleep
+import pandas as pd
+class  PetManager: pass
+
+manager = PetManager()
 class Pet:
     def __init__(self, name, type, age, size, energy_level, fee, status, days_in_centre):
         self.name = name
@@ -15,7 +21,10 @@ class Pet:
 
     
     def calculate_fee(self, adopter):
-        pass
+        fee = self.fee
+        # TODO: calculate fee
+        
+        return fee
 
 
     def calculate_compatability(self, adopter):
@@ -40,3 +49,25 @@ class Pet:
         else: compatability_rating = "Not Recommended"
 
         return compatability_rating
+    
+class PetManager:
+    def __init__(self):
+        pass
+
+    def generate_pet_id():
+        pass
+    
+    def add_pet():
+        pass
+
+    def remove_pet():
+        pass
+
+    def view_statistics():
+        pass
+
+    def view_available_pets():
+        pass
+    
+    def view_all_pets():
+        pass
