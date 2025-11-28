@@ -1,4 +1,4 @@
-PetID,Name,Type,Age,Size,Energy,Fee,Status,DaysInCentre
+PetID,Name,Type,Size,Energy,Fee,Status,DaysInCentre
 P001,Max,Dog,3,Large,High,150,Available,45
 P002,Whiskers,Cat,2,Small,Low,80,Available,12
 P003,Flopsy,Rabbit,1,Small,Medium,50,Available,8
