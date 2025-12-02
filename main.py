@@ -14,15 +14,15 @@ class AdopterManager:
         string_pattern = re.compile(r"^[a-zA-Z\s]+$")
         valid_home_types = ["Flat", "House", "Farm"]
         valid_experiences = ["None", "Some", "Expert"]
-        valid_sizes = ["Small", "Medium", "Large"]
-        valid_energy_levels = ["Low", "Medium", "High"]
+        valid_sizes = ["Small", "Medium", "Large", "Any"]
+        valid_energy_levels = ["Low", "Medium", "High", "Any"]
 
         name = input("1. Full name (must be at least 2 words): ").strip().title()
         if not re.search(string_pattern, name):
             print("Invalid input")
             return False
 
-        home_type = input("2. Home type (Flat, House, or Farm only): ").strip().title()
+        home_type = input("2. Home type (Flat, House, or Farm): ").strip().title()
         if home_type not in valid_home_types:
             print("Invalid input")
             return False
@@ -36,16 +36,19 @@ class AdopterManager:
         if preferred_size not in valid_sizes:
             print("Invalid input")
             return False
-        
+
         preferred_energy_level = input("5. Preferred energy level (Low, Medium, High, or Any): ").strip().title()
         if preferred_energy_level not in valid_energy_levels:
             print("Invalid input")
             return False
-        
-        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterId")
 
-        # TODO: create adopter id
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+        last_id = adopter_df.index[-1]
+        last_num = int(last_id[1::])
+        new_adopter_id = f"P{1+last_num:03d}"
+
         new_adopter = {
+            "AdopterID": new_adopter_id,
             "Name": name,
             "HomeType": home_type,
             "Experience": experience,
@@ -53,14 +56,13 @@ class AdopterManager:
             "PreferredEnergy": preferred_size,
             "Adopted/ReservedPets": [],
         }
-
-        pd.to_csv("adopters.csv", mode="a")
+    
+        # TODO: fix why new_adopter_df isn't being added to the adopters.csv
+        new_adopter_df = pd.DataFrame([new_adopter])
+        new_adopter_df.to_csv("adopters.csv", mode="a", index=False, header=False)
         
-        print('Thank you for signing up.')
-        print(f"Your unique adopter ID is: {new_adopter.id}")
-        # TODO: add to adopter.csv
-        new_adopter.to_csv("adopters.csv", mode="a")
-
+        print("\nThank you for signing up.")
+        print(f"Your unique adopter ID is: {new_adopter_id}")
 
     
     @staticmethod
@@ -69,7 +71,7 @@ class AdopterManager:
         print("Adopter Login:\n")
         
         # TODO: validate adopter ID
-        # TODO: check if adoper ID exists
+        # TODO: check if adopter ID exists
         entered_id = input("Enter your adopter ID: ")
     
     @staticmethod
@@ -81,12 +83,55 @@ class AdopterManager:
 
 class PetManager:
     @staticmethod
-    def generate_pet_id():
-        pass
-
-    @staticmethod
     def add_pet():
-        pass
+        system("clear")
+        print("Add Pet:\n")
+        print("Fill out the following to add a pet:")
+
+        string_pattern = re.compile(r"^[a-zA-Z\s]+$")
+        int_pattern = re.comile(r"^[\d]+$")
+        valid_types = ["Dog", "Cat", "Rabbit", "Hamster"]
+        valid_sizes = ["Small", "Medium", "Large"]
+        valid_energy_levels = ["Low", "Medium", "High"]
+
+        name = input("1. Name: ").strip().title()
+        if not re.search(string_pattern, name):
+            print("Invalid input")
+            return False
+
+        type = input("2. Type (Dog, Cat, Rabbit, Hamster): ").strip().title()
+        if type not in valid_types:
+            print("Invalid input")
+            return False
+
+        size = input("4. Pet size (Small, Medium or Large): ").strip().title()
+        if size not in valid_sizes:
+            print("Invalid input")
+            return False
+
+        energy_level = input("5. Energy level (Low, Medium or High): ").strip().title()
+        if energy_level not in valid_energy_levels:
+            print("Invalid input")
+            return False
+
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        last_id = pets_df.index[-1]
+        last_num = int(last_id[1::])
+        new_pet_id = f"P{1+last_num:03d}"
+
+        new_pet = {
+            "PetID": new_pet_id,
+            "Name": name,
+            "Type": type,
+            "Size": size,
+            "Energy": size,
+        }
+    
+        # TODO: fix why new_adopter_df isn't being added to the adopters.csv
+        new_pet_df = pd.DataFrame([new_pet])
+        new_pet_df.to_csv("pets.csv", mode="a", index=False, header=False)
+        
+        print("\nPet has been added to database.")
 
     @staticmethod
     def remove_pet():
@@ -94,9 +139,18 @@ class PetManager:
 
     @staticmethod
     def view_statistics():
-        pass
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        pets_df = pets_df[pets_df["Status"] == "Available"]
+        num_dogs = len(pets_df[pets_df["Type"] == "Dog"])
+        num_cats = len(pets_df[pets_df["Type"] == "Cat"])
+        num_rabbits = len(pets_df[pets_df["Type"] == "Hamster"])
+        num_hamsters = len(pets_df[pets_df["Type"] == "Rabbit"])
+
+        print(num_dogs, num_cats, num_rabbits, num_hamsters)
+
 
     def view_available_pets():
+        system("clear")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         available_pets = (pets_df[pets_df["Status"] == "Available"]).sort_values(by="DaysInCentre", ascending=False).drop(columns="Status")
         mean = f"{pets_df["DaysInCentre"].mean():.1f}"
@@ -104,6 +158,7 @@ class PetManager:
         print(mean)
     
     def view_all_pets():
+        system("clear")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         pets_df = pets_df.sort_values(by="DaysInCentre", ascending=False)
         mean = f"{pets_df["DaysInCentre"].mean():.1f}"
@@ -111,7 +166,7 @@ class PetManager:
         print(mean)
 
 
-    def calculate_fee(et, adopter):
+    def calculate_fee(pet, adopter):
         pass
     
     # TODO: fix this code for pet instead of self
@@ -213,6 +268,5 @@ def quit_site():
 def main():
     # TODO: make each pet and adopter in csv files an object
     AdopterManager.register_as_new_adopter()
-    
 
 main()
