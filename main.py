@@ -54,7 +54,7 @@ class AdopterManager:
             "Experience": experience,
             "PreferredSize": preferred_size,
             "PreferredEnergy": preferred_size,
-            "Adopted/ReservedPets": [],
+            "Adopted/ReservedPets": "None",
         }
     
         # TODO: fix why new_adopter_df isn't being added to the adopters.csv
@@ -63,6 +63,7 @@ class AdopterManager:
         
         print("\nThank you for signing up.")
         print(f"Your unique adopter ID is: {new_adopter_id}")
+        return
 
     
     @staticmethod
@@ -70,15 +71,71 @@ class AdopterManager:
         system("clear")
         print("Adopter Login:\n")
         
-        # TODO: validate adopter ID
-        # TODO: check if adopter ID exists
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+        adopter_ids = adopter_df.index
         entered_id = input("Enter your adopter ID: ")
+        id_pattern = re.compile(r"^[a-zA-Z\s\d]+$")
+
+        if len(entered_id) != 4:
+            print("Invalid ID. Returning to main menu...")
+            sleep(1.5)
+            display_main_menu()
+            return
+        if not re.search(id_pattern, entered_id):
+            print("Invalid ID. Returning to main menu...")
+            sleep(1.5)
+            display_main_menu()
+            return
+        if entered_id not in adopter_ids:
+            print("ID not found. Returning to main menu...")
+            sleep(1.5)
+            display_main_menu()
+            return
+
+        display_adopter_menu()
     
     @staticmethod
     def logout():
         system("clear")
         print("Logged out. Returning to main menu...")
         sleep(1.5)
+        display_main_menu()
+        
+
+
+    # TODO: fix this code to work for adopter_id and pet_id
+    @classmethod
+    def calculate_compatability(pet_id, adopter_id):
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+
+        points = 0
+        if adopter.home_type == "flat" and self.size == "large": points -= 20
+        if adopter.home_type == "farm" and self.type == "dog": points += 15
+        if adopter.home_type == "flat" and self.type != "dog": points += 10
+
+        if adopter.preferred_size == self.size: points += 20
+        elif adopter.preferred_size == "any": points += 10
+
+        if adopter.experience_level == "expert": points += 15
+        elif adopter.experience_level == "some": points += 10
+        elif self.energy_level == "high": points -= 15
+
+        if self.age >= 6: points += 10
+
+        if points >= 50: compatability_rating = "Excellent Match ⭐⭐⭐"
+        elif 30 <= points <= 49: compatability_rating = "Good Match ⭐⭐"
+        elif 10 <= points <= 29: compatability_rating = "Possible Match ⭐"
+        else: compatability_rating = "Not Recommended"
+
+        return compatability_rating
+
+
+    def view_compatabilities():
+        pass
+
+    def calculate_fee(pet, adopter_id):
+        pass
+
 
 
 class PetManager:
@@ -88,8 +145,9 @@ class PetManager:
         print("Add Pet:\n")
         print("Fill out the following to add a pet:")
 
+        # TODO: use dictionary to handle vaildation
         string_pattern = re.compile(r"^[a-zA-Z\s]+$")
-        int_pattern = re.comile(r"^[\d]+$")
+        int_pattern = re.compile(r"^[\d]+$")
         valid_types = ["Dog", "Cat", "Rabbit", "Hamster"]
         valid_sizes = ["Small", "Medium", "Large"]
         valid_energy_levels = ["Low", "Medium", "High"]
@@ -127,11 +185,11 @@ class PetManager:
             "Energy": size,
         }
     
-        # TODO: fix why new_adopter_df isn't being added to the adopters.csv
         new_pet_df = pd.DataFrame([new_pet])
         new_pet_df.to_csv("pets.csv", mode="a", index=False, header=False)
         
         print("\nPet has been added to database.")
+        
 
     @staticmethod
     def remove_pet():
@@ -141,14 +199,17 @@ class PetManager:
     def view_statistics():
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         pets_df = pets_df[pets_df["Status"] == "Available"]
+
+        # TODO: fix this
         num_dogs = len(pets_df[pets_df["Type"] == "Dog"])
         num_cats = len(pets_df[pets_df["Type"] == "Cat"])
         num_rabbits = len(pets_df[pets_df["Type"] == "Hamster"])
         num_hamsters = len(pets_df[pets_df["Type"] == "Rabbit"])
+        type_mode = pets_df[pets_df["Type"]].mode()
 
-        print(num_dogs, num_cats, num_rabbits, num_hamsters)
+        
 
-
+    @staticmethod
     def view_available_pets():
         system("clear")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
@@ -157,6 +218,7 @@ class PetManager:
         print(available_pets)
         print(mean)
     
+    @staticmethod
     def view_all_pets():
         system("clear")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
@@ -164,35 +226,6 @@ class PetManager:
         mean = f"{pets_df["DaysInCentre"].mean():.1f}"
         print(pets_df)
         print(mean)
-
-
-    def calculate_fee(pet, adopter):
-        pass
-    
-    # TODO: fix this code for pet instead of self
-    def calculate_compatability(pet, adopter):
-        pets_df = pd.read_csv("pets.csv", index_col="PetID")
-
-        points = 0
-        if adopter.home_type == "flat" and self.size == "large": points -= 20
-        if adopter.home_type == "farm" and self.type == "dog": points += 15
-        if adopter.home_type == "flat" and self.type != "dog": points += 10
-
-        if adopter.preferred_size == self.size: points += 20
-        elif adopter.preferred_size == "any": points += 10
-
-        if adopter.experience_level == "expert": points += 15
-        elif adopter.experience_level == "some": points += 10
-        elif self.energy_level == "high": points -= 15
-
-        if self.age >= 6: points += 10
-
-        if points >= 50: compatability_rating = "Excellent Match ⭐⭐⭐"
-        elif 30 <= points <= 49: compatability_rating = "Good Match ⭐⭐"
-        elif 10 <= points <= 29: compatability_rating = "Possible Match ⭐"
-        else: compatability_rating = "Not Recommended"
-
-        return compatability_rating
 
 
 
@@ -216,14 +249,26 @@ def display_main_menu():
         display_main_menu()
 
 
-def display_adopter_menu():
+def display_adopter_menu(adopter_id):
     system("clear")
+    name = None
+    print(f"Welcome, {name}\n")
     print("Adopter Menu:")
     print("1. View My Compatibility Matches")
     print("2. Reserve a Pet")
     print("3. View My Reserved/Adopted Pets")
     print("4. Cancel a Reservation")
     print("5. Logout")
+
+    pages = [AdopterManager.view_compatabilities, AdopterManager.reserve_pet, AdopterManager.logout]
+    options = len(pages)
+    user_choice = askOption(options)
+    if 1 <= user_choice <= options:
+        pages[user_choice - 1]()
+    else:
+        print("Invalid option, reloading page...")
+        sleep(1.5)
+        display_main_menu()
 
 
 def display_staff_menu():
@@ -266,7 +311,6 @@ def quit_site():
 
 
 def main():
-    # TODO: make each pet and adopter in csv files an object
-    AdopterManager.register_as_new_adopter()
+    PetManager.view_statistics()
 
 main()
