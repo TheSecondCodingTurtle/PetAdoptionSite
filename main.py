@@ -5,8 +5,8 @@ import re
 
 
 class AdopterManager:
-    @staticmethod
-    def register_as_new_adopter():
+    @classmethod
+    def register_as_new_adopter(self):
         system("clear")
         print("Register Page:\n")
         print("Fill out the following to register:")
@@ -18,29 +18,24 @@ class AdopterManager:
         valid_energy_levels = ["Low", "Medium", "High", "Any"]
 
         name = input("1. Full name (must be at least 2 words): ").strip().title()
-        if not re.search(string_pattern, name):
-            print("Invalid input")
-            return False
+        if not re.search(string_pattern, name) or len(name.split()) < 2:
+            return self.register_as_new_adopter()
 
         home_type = input("2. Home type (Flat, House, or Farm): ").strip().title()
         if home_type not in valid_home_types:
-            print("Invalid input")
-            return False
+            return self.register_as_new_adopter()
 
         experience = input("3. Experience level (None, Some, or Expert): ").strip().title()
         if experience not in valid_experiences:
-            print("Invalid input")
-            return False
+            return self.register_as_new_adopter()
 
         preferred_size = input("4. Preferred pet size (Small, Medium, Large, or Any): ").strip().title()
         if preferred_size not in valid_sizes:
-            print("Invalid input")
-            return False
+            return self.register_as_new_adopter()
 
         preferred_energy_level = input("5. Preferred energy level (Low, Medium, High, or Any): ").strip().title()
         if preferred_energy_level not in valid_energy_levels:
-            print("Invalid input")
-            return False
+            return self.register_as_new_adopter()
 
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         last_id = adopter_df.index[-1]
@@ -57,7 +52,6 @@ class AdopterManager:
             "Adopted/ReservedPets": "None",
         }
     
-        # TODO: fix why new_adopter_df isn't being added to the adopters.csv
         new_adopter_df = pd.DataFrame([new_adopter])
         new_adopter_df.to_csv("adopters.csv", mode="a", index=False, header=False)
         
@@ -76,37 +70,46 @@ class AdopterManager:
         entered_id = input("Enter your adopter ID: ")
         id_pattern = re.compile(r"^[a-zA-Z\s\d]+$")
 
-        if len(entered_id) != 4:
-            print("Invalid ID. Returning to main menu...")
-            sleep(1.5)
-            display_main_menu()
-            return
-        if not re.search(id_pattern, entered_id):
-            print("Invalid ID. Returning to main menu...")
-            sleep(1.5)
-            display_main_menu()
-            return
+        if not re.search(id_pattern, entered_id) or len(entered_id) != 4:
+            return display_main_menu()
+
         if entered_id not in adopter_ids:
             print("ID not found. Returning to main menu...")
             sleep(1.5)
-            display_main_menu()
-            return
+            return display_main_menu()
 
-        display_adopter_menu()
+        display_adopter_menu(entered_id)
     
     @staticmethod
-    def logout():
+    def logout(*args):
         system("clear")
         print("Logged out. Returning to main menu...")
         sleep(1.5)
         display_main_menu()
+    
+    def reserve_pet(adopter_id):
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        reserved_pets = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
+        if reserved_pets != "None":
+            reserved_pets = reserved_pets.split(";")
+            for pet_id in reserved_pets:
+                if pets_df.loc[pet_id]["Status"] == "Reserved":
+                    print("You already have a reservation. Please complete or cancel it first.")
+                    input("\nEnter any character to return to adopter menu: ")
+                    return display_adopter_menu(adopter_id)
+                
+        #  TODO: reserve a pet
         
-
+        
+        
 
     # TODO: fix this code to work for adopter_id and pet_id
     @classmethod
-    def calculate_compatability(pet_id, adopter_id):
+    def calculate_compatability(adopter_id, pet_id):
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        
 
         points = 0
         if adopter.home_type == "flat" and self.size == "large": points -= 20
@@ -136,11 +139,29 @@ class AdopterManager:
     def calculate_fee(pet, adopter_id):
         pass
 
+    def view_my_pets(adopter_id):
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+        reserved_pets = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
+        if reserved_pets != "None":
+            reserved_pets = reserved_pets.split(";")
+            for pet_id in reserved_pets:
+                print("\n")
+                PetManager.show_reserved_pet_info(pet_id)
+            
+        else:
+            print("\nYou haven't reserved or adopted any pets yet.")
+            
+        input("\nEnter any character to return to adopter menu: ")
+        return display_adopter_menu(adopter_id)
+
+    def cancel_reservation(adopter_id):
+        pass
+
 
 
 class PetManager:
-    @staticmethod
-    def add_pet():
+    @classmethod
+    def add_pet(self):
         system("clear")
         print("Add Pet:\n")
         print("Fill out the following to add a pet:")
@@ -155,22 +176,22 @@ class PetManager:
         name = input("1. Name: ").strip().title()
         if not re.search(string_pattern, name):
             print("Invalid input")
-            return False
+            return self.add_pet()
 
         type = input("2. Type (Dog, Cat, Rabbit, Hamster): ").strip().title()
         if type not in valid_types:
             print("Invalid input")
-            return False
+            return self.add_pet()
 
         size = input("4. Pet size (Small, Medium or Large): ").strip().title()
         if size not in valid_sizes:
             print("Invalid input")
-            return False
+            return self.add_pet()
 
         energy_level = input("5. Energy level (Low, Medium or High): ").strip().title()
         if energy_level not in valid_energy_levels:
             print("Invalid input")
-            return False
+            return self.add_pet()
 
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         last_id = pets_df.index[-1]
@@ -217,6 +238,22 @@ class PetManager:
         mean = f"{pets_df["DaysInCentre"].mean():.1f}"
         print(available_pets)
         print(mean)
+        input("Enter any charater to return to main menu: ")
+        display_main_menu()
+
+
+    def show_reserved_pet_info(pet_id):
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        print(pet_id)
+        print(pets_df.loc[pet_id]["Name"])
+        print(pets_df.loc[pet_id]["Type"])
+        print(pets_df.loc[pet_id]["Age"])
+        status = pets_df.loc[pet_id]["Status"]
+        print(status)
+        if status == "Reserved":
+            print("Ready to finalize adoption")
+
+        
     
     @staticmethod
     def view_all_pets():
@@ -226,6 +263,8 @@ class PetManager:
         mean = f"{pets_df["DaysInCentre"].mean():.1f}"
         print(pets_df)
         print(mean)
+        input("Enter any character to return to staff menu: ")
+        display_staff_menu()
 
 
 
@@ -238,7 +277,7 @@ def display_main_menu():
     print("4. Staff Menu")
     print("5. Quit")
 
-    pages = [AdopterManager.view_available_pets, AdopterManager.register_as_new_adopter, AdopterManager.login, display_staff_menu, quit_site]
+    pages = [PetManager.view_available_pets, AdopterManager.register_as_new_adopter, AdopterManager.login, display_staff_menu, quit_site]
     options = len(pages)
     user_choice = askOption(options)
     if 1 <= user_choice <= options:
@@ -251,7 +290,8 @@ def display_main_menu():
 
 def display_adopter_menu(adopter_id):
     system("clear")
-    name = None
+    adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+    name = adopter_df.loc[adopter_id]["Name"]
     print(f"Welcome, {name}\n")
     print("Adopter Menu:")
     print("1. View My Compatibility Matches")
@@ -260,11 +300,11 @@ def display_adopter_menu(adopter_id):
     print("4. Cancel a Reservation")
     print("5. Logout")
 
-    pages = [AdopterManager.view_compatabilities, AdopterManager.reserve_pet, AdopterManager.logout]
+    pages = [AdopterManager.view_compatabilities, AdopterManager.reserve_pet, AdopterManager.view_my_pets, AdopterManager.cancel_reservation, AdopterManager.logout]
     options = len(pages)
     user_choice = askOption(options)
     if 1 <= user_choice <= options:
-        pages[user_choice - 1]()
+        pages[user_choice - 1](adopter_id)
     else:
         print("Invalid option, reloading page...")
         sleep(1.5)
@@ -284,6 +324,16 @@ def display_staff_menu():
         print("4. View Statistics")
         print("5. Remove a pet")
         print("6. Logout")
+
+        pages = [PetManager.add_pet, None, PetManager.view_all_pets, PetManager.view_statistics, PetManager.remove_pet, AdopterManager.logout]
+        options = len(pages)
+        user_choice = askOption(options)
+        if 1 <= user_choice <= options:
+            pages[user_choice - 1]()
+        else:
+            print("Invalid option, reloading page...")
+            sleep(1.5)
+            display_main_menu()
 
 
 def check_staff_password():
@@ -310,7 +360,5 @@ def quit_site():
     quit()
 
 
-def main():
-    PetManager.view_statistics()
 
-main()
+display_main_menu()
