@@ -40,7 +40,7 @@ class AdopterManager:
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         last_id = adopter_df.index[-1]
         last_num = int(last_id[1::])
-        new_adopter_id = f"P{1+last_num:03d}"
+        new_adopter_id = f"A{1+last_num:03d}"
 
         new_adopter = {
             "AdopterID": new_adopter_id,
@@ -49,7 +49,7 @@ class AdopterManager:
             "Experience": experience,
             "PreferredSize": preferred_size,
             "PreferredEnergy": preferred_size,
-            "Adopted/ReservedPets": "None",
+            "Adopted/ReservedPets": "none",
         }
     
         new_adopter_df = pd.DataFrame([new_adopter])
@@ -57,21 +57,22 @@ class AdopterManager:
         
         print("\nThank you for signing up.")
         print(f"Your unique adopter ID is: {new_adopter_id}")
-        return
+        input("\nEnter any character to enter adopter menu: ")
+        return display_adopter_menu(new_adopter_id)
 
     
-    @staticmethod
-    def login():
+    @classmethod
+    def login(self):
         system("clear")
         print("Adopter Login:\n")
         
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         adopter_ids = adopter_df.index
-        entered_id = input("Enter your adopter ID: ")
+        entered_id = input("Enter your adopter ID: ").title()
         id_pattern = re.compile(r"^[a-zA-Z\s\d]+$")
 
         if not re.search(id_pattern, entered_id) or len(entered_id) != 4:
-            return display_main_menu()
+            return self.login()
 
         if entered_id not in adopter_ids:
             print("ID not found. Returning to main menu...")
@@ -99,7 +100,10 @@ class AdopterManager:
                     input("\nEnter any character to return to adopter menu: ")
                     return display_adopter_menu(adopter_id)
                 
+                
         #  TODO: reserve a pet
+        
+
         
         
         
@@ -142,7 +146,7 @@ class AdopterManager:
     def view_my_pets(adopter_id):
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         reserved_pets = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
-        if reserved_pets != "None":
+        if reserved_pets != "none":
             reserved_pets = reserved_pets.split(";")
             for pet_id in reserved_pets:
                 print("\n")
@@ -166,7 +170,6 @@ class PetManager:
         print("Add Pet:\n")
         print("Fill out the following to add a pet:")
 
-        # TODO: use dictionary to handle vaildation
         string_pattern = re.compile(r"^[a-zA-Z\s]+$")
         int_pattern = re.compile(r"^[\d]+$")
         valid_types = ["Dog", "Cat", "Rabbit", "Hamster"]
@@ -221,7 +224,7 @@ class PetManager:
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         pets_df = pets_df[pets_df["Status"] == "Available"]
 
-        # TODO: fix this
+        # TODO: complete this function
         num_dogs = len(pets_df[pets_df["Type"] == "Dog"])
         num_cats = len(pets_df[pets_df["Type"] == "Cat"])
         num_rabbits = len(pets_df[pets_df["Type"] == "Hamster"])
@@ -278,14 +281,8 @@ def display_main_menu():
     print("5. Quit")
 
     pages = [PetManager.view_available_pets, AdopterManager.register_as_new_adopter, AdopterManager.login, display_staff_menu, quit_site]
-    options = len(pages)
-    user_choice = askOption(options)
-    if 1 <= user_choice <= options:
-        pages[user_choice - 1]()
-    else:
-        print("Invalid option, reloading page...")
-        sleep(1.5)
-        display_main_menu()
+    user_choice = askOption(len(pages))
+    pages[user_choice - 1]()
 
 
 def display_adopter_menu(adopter_id):
@@ -301,14 +298,8 @@ def display_adopter_menu(adopter_id):
     print("5. Logout")
 
     pages = [AdopterManager.view_compatabilities, AdopterManager.reserve_pet, AdopterManager.view_my_pets, AdopterManager.cancel_reservation, AdopterManager.logout]
-    options = len(pages)
-    user_choice = askOption(options)
-    if 1 <= user_choice <= options:
-        pages[user_choice - 1](adopter_id)
-    else:
-        print("Invalid option, reloading page...")
-        sleep(1.5)
-        display_main_menu()
+    user_choice = askOption(len(pages))
+    pages[user_choice - 1](adopter_id)
 
 
 def display_staff_menu():
@@ -326,14 +317,8 @@ def display_staff_menu():
         print("6. Logout")
 
         pages = [PetManager.add_pet, None, PetManager.view_all_pets, PetManager.view_statistics, PetManager.remove_pet, AdopterManager.logout]
-        options = len(pages)
-        user_choice = askOption(options)
-        if 1 <= user_choice <= options:
-            pages[user_choice - 1]()
-        else:
-            print("Invalid option, reloading page...")
-            sleep(1.5)
-            display_main_menu()
+        user_choice = askOption(len(pages))
+        pages[user_choice - 1]()
 
 
 def check_staff_password():
@@ -350,8 +335,13 @@ def check_staff_password():
 
 
 def askOption(n):
-    user_option = int(input(f"\nChoose from options 1-{n}: "))
-    return user_option
+    user_option = input(f"\nChoose from options 1-{n}: ")
+
+    if user_option in [str(num+1) for num in range(n)]:
+        return int(user_option)
+    print("Invalid option. Enter again: ")
+    return askOption(n)
+
 
 
 def quit_site():
