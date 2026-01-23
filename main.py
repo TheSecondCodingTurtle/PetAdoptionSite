@@ -92,6 +92,7 @@ class AdopterManager:
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         reserved_pets = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
+        
         if reserved_pets != "None":
             reserved_pets = reserved_pets.split(";")
             for pet_id in reserved_pets:
@@ -161,6 +162,17 @@ class AdopterManager:
     def cancel_reservation(adopter_id):
         pass
 
+    def complete_an_adoption():
+        system("clear")
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        reserved_pets = (pets_df[pets_df["Status"] == "Reserved"])
+        if len(reserved_pets) == 0:
+            print("There are no reserved pets. Returning to main menu...")
+            sleep(1.5)
+            return display_main_menu()
+        else:
+            print(reserved_pets)
+
 
 
 class PetManager:
@@ -224,12 +236,12 @@ class PetManager:
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         pets_df = pets_df[pets_df["Status"] == "Available"]
 
-        # TODO: complete this function
-        num_dogs = len(pets_df[pets_df["Type"] == "Dog"])
-        num_cats = len(pets_df[pets_df["Type"] == "Cat"])
-        num_rabbits = len(pets_df[pets_df["Type"] == "Hamster"])
-        num_hamsters = len(pets_df[pets_df["Type"] == "Rabbit"])
-        type_mode = pets_df[pets_df["Type"]].mode()
+        # TODO: complete and fix this function
+        # num_dogs = len(pets_df[pets_df["Type"] == "Dog"])
+        # num_cats = len(pets_df[pets_df["Type"] == "Cat"])
+        # num_rabbits = len(pets_df[pets_df["Type"] == "Hamster"])
+        # num_hamsters = len(pets_df[pets_df["Type"] == "Rabbit"])
+        # type_mode = pets_df[pets_df["Type"]].mode()
 
         
 
@@ -265,7 +277,7 @@ class PetManager:
         pets_df = pets_df.sort_values(by="DaysInCentre", ascending=False)
         mean = f"{pets_df["DaysInCentre"].mean():.1f}"
         print(pets_df)
-        print(mean)
+        print(f"Mean days spent in centre: {mean}")
         input("Enter any character to return to staff menu: ")
         display_staff_menu()
 
@@ -280,7 +292,7 @@ def display_main_menu():
     print("4. Staff Menu")
     print("5. Quit")
 
-    pages = [PetManager.view_available_pets, AdopterManager.register_as_new_adopter, AdopterManager.login, display_staff_menu, quit_site]
+    pages = [PetManager.view_available_pets, AdopterManager.register_as_new_adopter, AdopterManager.login, check_staff_password, quit_site]
     user_choice = askOption(len(pages))
     pages[user_choice - 1]()
 
@@ -303,10 +315,6 @@ def display_adopter_menu(adopter_id):
 
 
 def display_staff_menu():
-    system("clear")
-    if not check_staff_password(): 
-        display_main_menu()
-    else:
         system("clear")
         print("Staff Menu:\n")
         print("1. Add New Pet")
@@ -316,22 +324,24 @@ def display_staff_menu():
         print("5. Remove a pet")
         print("6. Logout")
 
-        pages = [PetManager.add_pet, None, PetManager.view_all_pets, PetManager.view_statistics, PetManager.remove_pet, AdopterManager.logout]
+        pages = [PetManager.add_pet, AdopterManager.complete_an_adoption, PetManager.view_all_pets, PetManager.view_statistics, PetManager.remove_pet, AdopterManager.logout]
         user_choice = askOption(len(pages))
         pages[user_choice - 1]()
 
 
 def check_staff_password():
+    
+    system("clear")
     password = "admin123"
     for i in range(3):
         entered_password = input("Enter staff password: ")
         if entered_password == password:
-            return True
+            return display_staff_menu()
         else:
             print(f"Incorrect password. Attempts remaining: {2 - i}\n")
     print("Too many incorrect attempts. Returning to main menu...")
     sleep(1.5)
-    return False
+    return display_main_menu()
 
 
 def askOption(n):
