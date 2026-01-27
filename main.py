@@ -197,6 +197,11 @@ class PetManager:
         if type not in valid_types:
             print("Invalid input")
             return self.add_pet()
+        
+        age = input("3. Age: ").strip().title()
+        if type not in valid_types:
+            print("Invalid input")
+            return self.add_pet()
 
         size = input("4. Pet size (Small, Medium or Large): ").strip().title()
         if size not in valid_sizes:
@@ -216,6 +221,7 @@ class PetManager:
         new_pet = {
             "PetID": new_pet_id,
             "Name": name,
+            "Age": age,
             "Type": type,
             "Size": size,
             "Energy": size,
@@ -233,15 +239,26 @@ class PetManager:
 
     @staticmethod
     def view_statistics():
+        system("clear")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
-        pets_df = pets_df[pets_df["Status"] == "Available"]
+        available_pets_df = pets_df[pets_df["Status"] == "Available"]
 
-        # TODO: complete and fix this function
-        # num_dogs = len(pets_df[pets_df["Type"] == "Dog"])
-        # num_cats = len(pets_df[pets_df["Type"] == "Cat"])
-        # num_rabbits = len(pets_df[pets_df["Type"] == "Hamster"])
-        # num_hamsters = len(pets_df[pets_df["Type"] == "Rabbit"])
-        # type_mode = pets_df[pets_df["Type"]].mode()
+        num_pets = {}
+        num_pets["Dog"] = len(available_pets_df[available_pets_df["Type"] == "Dog"])
+        num_pets["Cat"] = len(available_pets_df[available_pets_df["Type"] == "Cat"])
+        num_pets["Rabbit"] = len(available_pets_df[available_pets_df["Type"] == "Rabbit"])
+        num_pets["Hamster"] = len(available_pets_df[available_pets_df["Type"] == "Hamster"])
+        
+
+        print(f"Number of available dogs: {num_pets["Dog"]}")
+        print(f"Number of available cats: {num_pets["Cat"]}")
+        print(f"Number of available rabbits: {num_pets["Rabbit"]}")
+        print(f"Number of available hamsters: {num_pets["Hamster"]}")
+        
+        for key, value in num_pets.items():
+            mode = max(num_pets.values())
+            if value == mode:
+                print(f"Most common available pet: {key}")
 
         
 
@@ -259,12 +276,12 @@ class PetManager:
 
     def show_reserved_pet_info(pet_id):
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
-        print(pet_id)
-        print(pets_df.loc[pet_id]["Name"])
-        print(pets_df.loc[pet_id]["Type"])
-        print(pets_df.loc[pet_id]["Age"])
+        print(f"Pet ID: {pet_id}")
+        print(f"Name: {pets_df.loc[pet_id]["Name"]}")
+        print(f"Type: {pets_df.loc[pet_id]["Type"]}")
+        print(f"Age: {pets_df.loc[pet_id]["Age"]}")
         status = pets_df.loc[pet_id]["Status"]
-        print(status)
+        print(f"Status: {status}")
         if status == "Reserved":
             print("Ready to finalize adoption")
 

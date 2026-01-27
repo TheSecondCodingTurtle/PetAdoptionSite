@@ -1,6 +1,6 @@
 PetID,Name,Type,Age,Size,Energy,Fee,Status,DaysInCentre
 P001,Max,Dog,3,Large,High,150,Available,45
-P002,Whiskers,Cat,2,Small,Low,80,Available,12
+P002,Whiskers,Cat,2,Small,Low,80,Reserved,12
 P003,Flopsy,Rabbit,1,Small,Medium,50,Available,8
 P004,Buddy,Dog,7,Medium,Low,120,Reserved,67
 P005,Mittens,Cat,5,Medium,Medium,90,Adopted,0
@@ -14,3 +14,6 @@ P012,Duke,Dog,4,Large,High,155,Available,38
 P013,Squeaky,Hamster,1,Small,Low,25,Available,10
 P014,Ginger,Cat,7,Medium,Low,80,Available,95
 P015,Peanut,Rabbit,2,Small,Medium,45,Adopted,0
+P016,Max,Dog,Small,Small
+P017,Max,Dog,Small,Small
+P018,Max,4,Dog,Small,Small
