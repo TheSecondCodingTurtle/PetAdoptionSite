@@ -5,8 +5,8 @@ import re
 
 
 class AdopterManager:
-    @classmethod
-    def register_as_new_adopter(self):
+    @stsaticmethod
+    def register_as_new_adopter():
         system("clear")
         print("Register Page:\n")
         print("Fill out the following to register:")
@@ -48,7 +48,7 @@ class AdopterManager:
             "HomeType": home_type,
             "Experience": experience,
             "PreferredSize": preferred_size,
-            "PreferredEnergy": preferred_size,
+            "PreferredEnergy": preferred_energy,
             "Adopted/ReservedPets": "none",
         }
     
@@ -61,8 +61,8 @@ class AdopterManager:
         return display_adopter_menu(new_adopter_id)
 
     
-    @classmethod
-    def login(self):
+    @staticmethod
+    def login():
         system("clear")
         print("Adopter Login:\n")
         
@@ -87,7 +87,8 @@ class AdopterManager:
         print("Logged out. Returning to main menu...")
         sleep(1.5)
         display_main_menu()
-    
+
+    @staticmethod
     def reserve_pet(adopter_id):
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
@@ -110,8 +111,8 @@ class AdopterManager:
         
 
     # TODO: fix this code to work for adopter_id and pet_id
-    @classmethod
-    def calculate_compatability(adopter_id, pet_id):
+    @staticmethod
+    def calculate_compatibility(adopter_id, pet_id):
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         
@@ -137,13 +138,15 @@ class AdopterManager:
 
         return compatability_rating
 
-
-    def view_compatabilities():
+    @staticmethod
+    def view_compatibilities():
         pass
 
+    @staticmethod
     def calculate_fee(pet, adopter_id):
         pass
 
+    @staticmethod
     def view_my_pets(adopter_id):
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         reserved_pets = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
@@ -159,9 +162,11 @@ class AdopterManager:
         input("\nEnter any character to return to adopter menu: ")
         return display_adopter_menu(adopter_id)
 
+    @staticmethod
     def cancel_reservation(adopter_id):
         pass
 
+    @staticmethod
     def complete_an_adoption():
         system("clear")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
@@ -176,8 +181,8 @@ class AdopterManager:
 
 
 class PetManager:
-    @classmethod
-    def add_pet(self):
+    @staticmethod
+    def add_pet():
         system("clear")
         print("Add Pet:\n")
         print("Fill out the following to add a pet:")
@@ -185,6 +190,7 @@ class PetManager:
         string_pattern = re.compile(r"^[a-zA-Z\s]+$")
         int_pattern = re.compile(r"^[\d]+$")
         valid_types = ["Dog", "Cat", "Rabbit", "Hamster"]
+        valid_ages = list(range(0, 25))
         valid_sizes = ["Small", "Medium", "Large"]
         valid_energy_levels = ["Low", "Medium", "High"]
 
@@ -199,7 +205,7 @@ class PetManager:
             return self.add_pet()
         
         age = input("3. Age: ").strip().title()
-        if type not in valid_types:
+        if age not in valid_ages:
             print("Invalid input")
             return self.add_pet()
 
@@ -224,7 +230,7 @@ class PetManager:
             "Age": age,
             "Type": type,
             "Size": size,
-            "Energy": size,
+            "Energy": energy_level,
         }
     
         new_pet_df = pd.DataFrame([new_pet])
@@ -258,9 +264,7 @@ class PetManager:
         for key, value in num_pets.items():
             mode = max(num_pets.values())
             if value == mode:
-                print(f"Most common available pet: {key}")
-
-        
+                print(f"Most common available pet: {key}") 
 
     @staticmethod
     def view_available_pets():
@@ -273,7 +277,7 @@ class PetManager:
         input("Enter any charater to return to main menu: ")
         display_main_menu()
 
-
+    @staticmethod
     def show_reserved_pet_info(pet_id):
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         print(f"Pet ID: {pet_id}")
@@ -283,9 +287,7 @@ class PetManager:
         status = pets_df.loc[pet_id]["Status"]
         print(f"Status: {status}")
         if status == "Reserved":
-            print("Ready to finalize adoption")
-
-        
+            print("Ready to finalize adoption")   
     
     @staticmethod
     def view_all_pets():
