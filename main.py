@@ -5,7 +5,7 @@ import re
 
 
 class AdopterManager:
-    @stsaticmethod
+    @staticmethod
     def register_as_new_adopter():
         system("clear")
         print("Register Page:\n")
@@ -19,23 +19,23 @@ class AdopterManager:
 
         name = input("1. Full name (must be at least 2 words): ").strip().title()
         if not re.search(string_pattern, name) or len(name.split()) < 2:
-            return self.register_as_new_adopter()
+            return AdopterManager.register_as_new_adopter()
 
         home_type = input("2. Home type (Flat, House, or Farm): ").strip().title()
         if home_type not in valid_home_types:
-            return self.register_as_new_adopter()
+            return AdopterManager.register_as_new_adopter()
 
         experience = input("3. Experience level (None, Some, or Expert): ").strip().title()
         if experience not in valid_experiences:
-            return self.register_as_new_adopter()
+            return AdopterManager.register_as_new_adopter()
 
         preferred_size = input("4. Preferred pet size (Small, Medium, Large, or Any): ").strip().title()
         if preferred_size not in valid_sizes:
-            return self.register_as_new_adopter()
+            return AdopterManager.register_as_new_adopter()
 
         preferred_energy_level = input("5. Preferred energy level (Low, Medium, High, or Any): ").strip().title()
         if preferred_energy_level not in valid_energy_levels:
-            return self.register_as_new_adopter()
+            return AdopterManager.register_as_new_adopter()
 
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         last_id = adopter_df.index[-1]
@@ -48,7 +48,7 @@ class AdopterManager:
             "HomeType": home_type,
             "Experience": experience,
             "PreferredSize": preferred_size,
-            "PreferredEnergy": preferred_energy,
+            "PreferredEnergy": preferred_energy_level,
             "Adopted/ReservedPets": "none",
         }
     
@@ -60,7 +60,6 @@ class AdopterManager:
         input("\nEnter any character to enter adopter menu: ")
         return display_adopter_menu(new_adopter_id)
 
-    
     @staticmethod
     def login():
         system("clear")
@@ -72,7 +71,7 @@ class AdopterManager:
         id_pattern = re.compile(r"^[a-zA-Z\s\d]+$")
 
         if not re.search(id_pattern, entered_id) or len(entered_id) != 4:
-            return self.login()
+            return AdopterManager.login()
 
         if entered_id not in adopter_ids:
             print("ID not found. Returning to main menu...")
@@ -104,10 +103,6 @@ class AdopterManager:
                 
                 
         #  TODO: reserve a pet
-        
-
-        
-        
         
 
     # TODO: fix this code to work for adopter_id and pet_id
@@ -188,7 +183,6 @@ class PetManager:
         print("Fill out the following to add a pet:")
 
         string_pattern = re.compile(r"^[a-zA-Z\s]+$")
-        int_pattern = re.compile(r"^[\d]+$")
         valid_types = ["Dog", "Cat", "Rabbit", "Hamster"]
         valid_ages = list(range(0, 25))
         valid_sizes = ["Small", "Medium", "Large"]
@@ -197,27 +191,27 @@ class PetManager:
         name = input("1. Name: ").strip().title()
         if not re.search(string_pattern, name):
             print("Invalid input")
-            return self.add_pet()
+            return PetManager.add_pet()
 
         type = input("2. Type (Dog, Cat, Rabbit, Hamster): ").strip().title()
         if type not in valid_types:
             print("Invalid input")
-            return self.add_pet()
+            return PetManager.add_pet()
         
         age = input("3. Age: ").strip().title()
-        if age not in valid_ages:
+        if int(age) not in valid_ages:
             print("Invalid input")
-            return self.add_pet()
+            return PetManager.add_pet()
 
         size = input("4. Pet size (Small, Medium or Large): ").strip().title()
         if size not in valid_sizes:
             print("Invalid input")
-            return self.add_pet()
+            return PetManager.add_pet()
 
         energy_level = input("5. Energy level (Low, Medium or High): ").strip().title()
         if energy_level not in valid_energy_levels:
             print("Invalid input")
-            return self.add_pet()
+            return PetManager.add_pet()
 
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         last_id = pets_df.index[-1]
@@ -328,7 +322,7 @@ def display_adopter_menu(adopter_id):
     print("4. Cancel a Reservation")
     print("5. Logout")
 
-    pages = [AdopterManager.view_compatabilities, AdopterManager.reserve_pet, AdopterManager.view_my_pets, AdopterManager.cancel_reservation, AdopterManager.logout]
+    pages = [AdopterManager.view_compatibilities, AdopterManager.reserve_pet, AdopterManager.view_my_pets, AdopterManager.cancel_reservation, AdopterManager.logout]
     user_choice = askOption(len(pages))
     pages[user_choice - 1](adopter_id)
 
