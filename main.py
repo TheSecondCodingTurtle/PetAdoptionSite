@@ -89,57 +89,199 @@ class AdopterManager:
 
     @staticmethod
     def reserve_pet(adopter_id):
+        system("clear")
+        print("Reserve a Pet:\n")
+
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         reserved_pets = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
-        
+
         if reserved_pets != "None":
-            reserved_pets = reserved_pets.split(";")
-            for pet_id in reserved_pets:
+            for pet_id in reserved_pets.split(";"):
                 if pets_df.loc[pet_id]["Status"] == "Reserved":
                     print("You already have a reservation. Please complete or cancel it first.")
                     input("\nEnter any character to return to adopter menu: ")
                     return display_adopter_menu(adopter_id)
-                
-                
-        #  TODO: reserve a pet
-        
 
-    # TODO: fix this code to work for adopter_id and pet_id
+        available_pets = pets_df[pets_df["Status"] == "Available"]
+        if len(available_pets) == 0:
+            print("There are no available pets to reserve.")
+            input("\nEnter any character to return to adopter menu: ")
+            return display_adopter_menu(adopter_id)
+
+        results = []
+        for pet_id in available_pets.index:
+            points, rating = AdopterManager.calculate_compatibility(adopter_id, pet_id)
+            pet = available_pets.loc[pet_id]
+            results.append((pet_id, pet["Name"], pet["Type"], pet["Size"], pet["Energy"], pet["Age"], points, rating))
+
+        results.sort(key=lambda x: x[6], reverse=True)
+
+        for pet_id, name, pet_type, size, energy, age, points, rating in results:
+            print(f"{pet_id} - {name} ({pet_type}, {size}, {energy} energy, age {age})")
+            print(f"         {rating} - Score: {points}/80")
+            print()
+
+        chosen_id = input("Enter Pet ID to reserve: ").strip().upper()
+
+        if chosen_id not in pets_df.index:
+            print("Pet ID not found.")
+            sleep(1.5)
+            return AdopterManager.reserve_pet(adopter_id)
+
+        if pets_df.loc[chosen_id]["Status"] != "Available":
+            print("That pet is not available.")
+            sleep(1.5)
+            return AdopterManager.reserve_pet(adopter_id)
+
+        points, rating = AdopterManager.calculate_compatibility(adopter_id, chosen_id)
+        if points < 10:
+            confirm = input(f"Warning: This pet's compatibility score is low. Are you sure? (Yes/No): ").strip().title()
+            if confirm != "Yes":
+                return display_adopter_menu(adopter_id)
+
+        # - update pets.csv -
+        pets_df.loc[chosen_id, "Status"] = "Reserved"
+        pets_df.to_csv("pets.csv")
+
+        # - update adopters.csv -
+        current_pets = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
+        if current_pets == "None":
+            adopter_df.loc[adopter_id, "Adopted/ReservedPets"] = chosen_id
+        else:
+            adopter_df.loc[adopter_id, "Adopted/ReservedPets"] = current_pets + ";" + chosen_id
+        adopter_df.to_csv("adopters.csv")
+
+        fee = AdopterManager.calculate_fee(chosen_id, adopter_id)
+        pet_name = pets_df.loc[chosen_id]["Name"]
+        print(f"\n{pet_name} has been reserved successfully!")
+        print(f"Your adoption fee will be: £{fee}")
+        input("\nEnter any character to return to adopter menu: ")
+        return display_adopter_menu(adopter_id)
+    
     @staticmethod
     def calculate_compatibility(adopter_id, pet_id):
         adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
-        
+
+        adopter = adopter_df.loc[adopter_id]
+        pet = pets_df.loc[pet_id]
+
+        home_type = adopter["HomeType"]
+        experience = adopter["Experience"]
+        preferred_size = adopter["PreferredSize"]
+        preferred_energy = adopter["PreferredEnergy"]
+
+        pet_type = pet["Type"]
+        pet_size = pet["Size"]
+        pet_energy = pet["Energy"]
+        pet_age = int(pet["Age"])
 
         points = 0
-        if adopter.home_type == "flat" and self.size == "large": points -= 20
-        if adopter.home_type == "farm" and self.type == "dog": points += 15
-        if adopter.home_type == "flat" and self.type != "dog": points += 10
 
-        if adopter.preferred_size == self.size: points += 20
-        elif adopter.preferred_size == "any": points += 10
+        if pet_size == "Large" and pet_type == "Dog" and home_type == "Flat":
+            points -= 20
+        if pet_type == "Dog" and home_type == "Farm":
+            points += 15
+        if pet_type != "Dog" and home_type == "Flat":
+            points += 10
 
-        if adopter.experience_level == "expert": points += 15
-        elif adopter.experience_level == "some": points += 10
-        elif self.energy_level == "high": points -= 15
+        if preferred_size == pet_size:
+            points += 20
+        elif preferred_size == "Any":
+            points += 10
 
-        if self.age >= 6: points += 10
+        if preferred_energy == pet_energy:
+            points += 20
+        elif preferred_energy == "Any":
+            points += 10
 
-        if points >= 50: compatability_rating = "Excellent Match ⭐⭐⭐"
-        elif 30 <= points <= 49: compatability_rating = "Good Match ⭐⭐"
-        elif 10 <= points <= 29: compatability_rating = "Possible Match ⭐"
-        else: compatability_rating = "Not Recommended"
+        if experience == "Expert":
+            points += 15
+        elif experience == "Some":
+            points += 10
+        elif pet_energy == "High" and experience == "None":
+            points -= 15
 
-        return compatability_rating
+        if pet_age >= 6:
+            points += 10
+
+        if points >= 50:
+            rating = "Excellent Match ⭐⭐⭐"
+        elif 30 <= points <= 49:
+            rating = "Good Match ⭐⭐"
+        elif 10 <= points <= 29:
+            rating = "Possible Match ⭐"
+        else:
+            rating = "Not Recommended"
+
+        return points, rating
 
     @staticmethod
-    def view_compatibilities():
-        pass
+    def view_compatibilities(adopter_id):
+        system("clear")
+        print("Your Compatibility Matches:\n")
+
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        available_pets = pets_df[pets_df["Status"] == "Available"]
+
+        if len(available_pets) == 0:
+            print("There are no available pets to match with.")
+            input("\nEnter any character to return to adopter menu: ")
+            return display_adopter_menu(adopter_id)
+
+        results = []
+        for pet_id in available_pets.index:
+            points, rating = AdopterManager.calculate_compatibility(adopter_id, pet_id)
+            pet = available_pets.loc[pet_id]
+            results.append({
+                "PetID": pet_id,
+                "Name": pet["Name"],
+                "Type": pet["Type"],
+                "Age": pet["Age"],
+                "Size": pet["Size"],
+                "Energy": pet["Energy"],
+                "Score": points,
+                "Rating": rating,
+            })
+
+        results.sort(key=lambda x: x["Score"], reverse=True)
+
+        for r in results:
+            print(f"{r['PetID']} - {r['Name']} ({r['Type']}, {r['Size']}, {r['Energy']} energy, age {r['Age']})")
+            print(f"       {r['Rating']} - Score: {r['Score']}/80\n")
+
+        input("Enter any character to return to adopter menu: ")
+        return display_adopter_menu(adopter_id)
 
     @staticmethod
-    def calculate_fee(pet, adopter_id):
-        pass
+    def calculate_fee(pet_id, adopter_id):
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+
+        pet = pets_df.loc[pet_id]
+        adopter = adopter_df.loc[adopter_id]
+
+        fee = float(pet["Fee"])
+        days = int(pet["DaysInCentre"])
+        age = int(pet["Age"])
+        experience = adopter["Experience"]
+
+        if days >= 60:
+            fee -= fee * 0.30
+        elif days >= 30:
+            fee -= fee * 0.20
+
+        if age >= 6:
+            fee -= 15
+
+        if experience == "Expert":
+            fee -= fee * 0.10
+
+        if fee < 20:
+            fee = 20
+
+        return round(fee, 2)
 
     @staticmethod
     def view_my_pets(adopter_id):
@@ -159,19 +301,113 @@ class AdopterManager:
 
     @staticmethod
     def cancel_reservation(adopter_id):
-        pass
+        system("clear")
+        print("Cancel a Reservation:\n")
+
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+
+        pets_listed = adopter_df.loc[adopter_id]["Adopted/ReservedPets"]
+
+        if pets_listed == "None":
+            print("You have no reservations to cancel.")
+            input("\nEnter any character to return to adopter menu: ")
+            return display_adopter_menu(adopter_id)
+
+        reserved = [pid for pid in pets_listed.split(";") if pets_df.loc[pid]["Status"] == "Reserved"]
+
+        if len(reserved) == 0:
+            print("You have no reservations to cancel.")
+            input("\nEnter any character to return to adopter menu: ")
+            return display_adopter_menu(adopter_id)
+
+        print("Your current reservations:\n")
+        for pet_id in reserved:
+            pet = pets_df.loc[pet_id]
+            print(f"{pet_id} - {pet['Name']} ({pet['Type']}, age {pet['Age']})")
+
+        chosen_id = input("\nEnter Pet ID to cancel: ").strip().upper()
+
+        if chosen_id not in reserved:
+            print("Invalid Pet ID. Must be one of your reserved pets.")
+            sleep(1.5)
+            return AdopterManager.cancel_reservation(adopter_id)
+
+        pets_df.loc[chosen_id, "Status"] = "Available"
+        pets_df.to_csv("pets.csv")
+
+        all_pets = pets_listed.split(";")
+        all_pets.remove(chosen_id)
+        new_pets = ";".join(all_pets) if len(all_pets) > 0 else "None"
+        adopter_df.loc[adopter_id, "Adopted/ReservedPets"] = new_pets
+        adopter_df.to_csv("adopters.csv")
+
+        pet_name = pets_df.loc[chosen_id]["Name"]
+        print(f"\nReservation for {pet_name} has been cancelled.")
+        input("\nEnter any character to return to adopter menu: ")
+        return display_adopter_menu(adopter_id)
 
     @staticmethod
     def complete_an_adoption():
         system("clear")
+        print("Complete an Adoption:\n")
+
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
-        reserved_pets = (pets_df[pets_df["Status"] == "Reserved"])
+        adopter_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+
+        reserved_pets = pets_df[pets_df["Status"] == "Reserved"]
         if len(reserved_pets) == 0:
-            print("There are no reserved pets. Returning to main menu...")
+            print("There are no reserved pets.")
             sleep(1.5)
-            return display_main_menu()
-        else:
-            print(reserved_pets)
+            return display_staff_menu()
+
+        print(reserved_pets)
+
+        pet_id = input("\nEnter Pet ID to finalise: (or enter 'Cancel' to cancel): ").strip().upper()
+
+        if pet_id == "CANCEL":
+            return display_staff_menu()
+
+        if pet_id not in pets_df.index:
+            print("Pet ID not found.")
+            sleep(1.5)
+            return AdopterManager.complete_an_adoption()
+
+        if pets_df.loc[pet_id]["Status"] != "Reserved":
+            print("That pet is not reserved.")
+            sleep(1.5)
+            return AdopterManager.complete_an_adoption()
+
+        adopter_id = None
+        for aid in adopter_df.index:
+            pets_listed = adopter_df.loc[aid]["Adopted/ReservedPets"]
+            if pets_listed != "None" and pet_id in pets_listed.split(";"):
+                adopter_id = aid
+                break
+
+        if adopter_id is None:
+            print("Error: no adopter found for this reservation.")
+            sleep(1.5)
+            return display_staff_menu()
+
+        pet = pets_df.loc[pet_id]
+        adopter = adopter_df.loc[adopter_id]
+        fee = AdopterManager.calculate_fee(pet_id, adopter_id)
+
+        print(f"\nPet: {pet['Name']} (Type: {pet['Type']}, Age: {pet['Age']})")
+        print(f"Adopter: {adopter['Name']} (AdopterID: {adopter_id})")
+        print(f"Adoption fee: £{fee}")
+
+        confirm = input("\nConfirm adoption completion? (Yes/No): ").strip().title()
+
+        if confirm == "Yes":
+            pets_df.loc[pet_id, "Status"] = "Adopted"
+            pets_df.loc[pet_id, "DaysInCentre"] = 0
+            pets_df.to_csv("pets.csv")
+            print(f"\nAdoption completed! {pet['Name']} has found a forever home with {adopter['Name']}!")
+            sleep(2)
+
+        return display_staff_menu()
 
 
 
@@ -184,7 +420,6 @@ class PetManager:
 
         string_pattern = re.compile(r"^[a-zA-Z\s]+$")
         valid_types = ["Dog", "Cat", "Rabbit", "Hamster"]
-        valid_ages = list(range(0, 25))
         valid_sizes = ["Small", "Medium", "Large"]
         valid_energy_levels = ["Low", "Medium", "High"]
 
@@ -193,15 +428,16 @@ class PetManager:
             print("Invalid input")
             return PetManager.add_pet()
 
-        type = input("2. Type (Dog, Cat, Rabbit, Hamster): ").strip().title()
-        if type not in valid_types:
+        pet_type = input("2. Type (Dog, Cat, Rabbit, Hamster): ").strip().title()
+        if pet_type not in valid_types:
             print("Invalid input")
             return PetManager.add_pet()
-        
-        age = input("3. Age: ").strip().title()
-        if int(age) not in valid_ages:
+
+        age = input("3. Age (0-20): ").strip()
+        if not age.isdigit() or not (0 <= int(age) <= 20):
             print("Invalid input")
             return PetManager.add_pet()
+        age = int(age)
 
         size = input("4. Pet size (Small, Medium or Large): ").strip().title()
         if size not in valid_sizes:
@@ -213,52 +449,143 @@ class PetManager:
             print("Invalid input")
             return PetManager.add_pet()
 
+        fee = input("6. Adoption fee (£20-£300): £").strip()
+        if not fee.isdigit() or not (20 <= int(fee) <= 300):
+            print("Invalid input")
+            return PetManager.add_pet()
+        fee = int(fee)
+
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
         last_id = pets_df.index[-1]
-        last_num = int(last_id[1::])
-        new_pet_id = f"P{1+last_num:03d}"
+        last_num = int(last_id[1:])
+        new_pet_id = f"P{1 + last_num:03d}"
 
         new_pet = {
             "PetID": new_pet_id,
             "Name": name,
+            "Type": pet_type,
             "Age": age,
-            "Type": type,
             "Size": size,
             "Energy": energy_level,
+            "Fee": fee,
+            "Status": "Available",
+            "DaysInCentre": 0,
         }
-    
+
         new_pet_df = pd.DataFrame([new_pet])
         new_pet_df.to_csv("pets.csv", mode="a", index=False, header=False)
+
+        print(f"\nPet has been added to the database.")
+        print(f"Assigned Pet ID: {new_pet_id}")
+        input("\nEnter any character to return to staff menu: ")
+        return display_staff_menu()
         
-        print("\nPet has been added to database.")
-        
+    @staticmethod
+    def complete_adoption():
+        pass
 
     @staticmethod
     def remove_pet():
-        pass
+        system("clear")
+        print("Remove a Pet: \n")
+
+        pets_df = pd.read_csv("pets.csv", index_col="PetID")
+        available_pets = pets_df[pets_df["Status"] == "Available"]
+
+        if len(available_pets) == 0:
+            print("There are no available pets to remove.")
+            sleep(1.5)
+            return display_staff_menu
+        
+        print(available_pets)
+
+        pet_id = input("\nEnter Pet ID to remove (or enter 'Cancel' to cancel): ").strip().upper()
+        
+        if pet_id == "CANCEL":
+            return display_staff_menu()
+
+        if pet_id not in pets_df.index:
+            print("Pet ID not found.")
+            sleep(1.5)
+            return PetManager.remove_pet()
+        
+        if pets_df.loc[pet_id]["Status"] != "Available":
+            print("You can only remove available pets, not reserved or adopted ones.")
+            sleep(1.5)
+            return PetManager.remove_pet()
+        
+        pet_name = pets_df.loc[pet_id]["Name"]
+        confirm = input(f"Are you sure you want to remove {pet_name}? (Yes/No): ").lower()
+
+        if confirm == "yes":
+            pets_df = pets_df.drop(pet_id)
+            pets_df.to_csv("pets.csv")
+            print(f"{pet_name} has been removed from the database.")
+            sleep(1.5)
+
+        return display_staff_menu()
 
     @staticmethod
     def view_statistics():
         system("clear")
+        print("Statistics: \n")
+
         pets_df = pd.read_csv("pets.csv", index_col="PetID")
-        available_pets_df = pets_df[pets_df["Status"] == "Available"]
+        available_df = pets_df[pets_df["Status"] == "Available"]
 
-        num_pets = {}
-        num_pets["Dog"] = len(available_pets_df[available_pets_df["Type"] == "Dog"])
-        num_pets["Cat"] = len(available_pets_df[available_pets_df["Type"] == "Cat"])
-        num_pets["Rabbit"] = len(available_pets_df[available_pets_df["Type"] == "Rabbit"])
-        num_pets["Hamster"] = len(available_pets_df[available_pets_df["Type"] == "Hamster"])
-        
+        adopters_df = pd.read_csv("adopters.csv", index_col="AdopterID")
+        adopted_df = pets_df[pets_df["Status"] == "Adopted"]
 
-        print(f"Number of available dogs: {num_pets["Dog"]}")
-        print(f"Number of available cats: {num_pets["Cat"]}")
-        print(f"Number of available rabbits: {num_pets["Rabbit"]}")
-        print(f"Number of available hamsters: {num_pets["Hamster"]}")
+        print("Available pets by type:")
+        num_pets = {
+            "Dog": len(available_df[available_df["Type"] == "Dog"]),
+            "Cat": len(available_df[available_df["Type"] == "Cat"]),
+            "Rabbit": len(available_df[available_df["Type"] == "Rabbit"]),
+            "Hamster": len(available_df[available_df["Type"] == "Hamster"])
+        }
+
+        for pet_type, count in num_pets.items():
+            print(f"{pet_type}: {count}")
         
-        for key, value in num_pets.items():
-            mode = max(num_pets.values())
-            if value == mode:
-                print(f"Most common available pet: {key}") 
+        most_common = max(num_pets, key=num_pets.get)
+        print(f"Most common available pet type: {most_common}")
+
+        print("\nAdoption success:")
+        print(f"Total completed adoptions: {len(adopted_df)}")
+
+        if len(adopted_df) > 0:
+            avg_days = adopted_df["DaysInCentre"].mean()
+            print(f"Average days in centre before adoption: {avg_days:.1f}")
+        else:
+            print(f"Average days in centre before adoption: N/A")
+
+        if len(available_df) > 0:
+            longest_waiting = available_df["DaysInCentre"].idxmax()
+            longest_name = available_df.loc[longest_waiting]["Name"]
+            longest_days = available_df.loc[longest_waiting]["DaysInCentre"]
+            print(f"Longest waiting pet: {longest_name} ({longest_days} days)")
+        else:
+            print("Longest waiting pet: N/A")
+
+        print("\nFinancial information:")
+        total_income = available_df["Fee"].sum()
+        avg_fee = pets_df["Fee"].mean()
+        print(f"Total potential income from available pets: £{total_income:.2f}")
+        print(f"Average adoption fee across all pets: £{avg_fee:.2f}")
+
+        print("\nAdopter Information:")
+        total_adopters = len(adopted_df)
+        adopters_with_pets = len(adopters_df[adopters_df["Adopted/ReservedPets"] != "none"])
+        print(f"Total registered adopters: {total_adopters}")
+        print(f"Adopters with completed adoptions: {adopters_with_pets}")
+
+        experience_counts = adopters_df["Experience"].value_counts()
+        for level in ["None", "Some", "Expert"]:
+            count = experience_counts.get(level, 0)
+            print(f"{level} experience adopters: {count}")
+
+        input("\nEnter any charatcer to return to staff menu: ")
+        return display_staff_menu()
 
     @staticmethod
     def view_available_pets():

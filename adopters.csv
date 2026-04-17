@@ -1,8 +1,7 @@
 AdopterID,Name,HomeType,Experience,PreferredSize,PreferredEnergy,Adopted/ReservedPets
-A001,Sarah Jones,House,Some,Medium,Medium,P010
-A002,Tom Brown,Flat,none,Small,Low,P002
+A001,Sarah Jones,House,Some,Medium,Medium,None
+A002,Tom Brown,Flat,,Small,Low,P002
 A003,Emma Davis,Farm,Expert,Any,Any,P005;P015
-A004,Michael Wilson,House,Some,Large,High,none
-A005,Lisa Anderson,Flat,none,Small,Low,none
+A004,Michael Wilson,House,Some,Large,High,
+A005,Lisa Anderson,Flat,,Small,Low,
 A006,David Thompson,Farm,Expert,Large,Medium,P004
-A007,Aditya Agrawal,House,Some,Medium,Medium,none
